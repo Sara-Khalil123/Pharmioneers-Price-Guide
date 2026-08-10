@@ -1,0 +1,6 @@
+{
+  "name": "دليل أسعار الأدوية",
+  "description": "Hospital Pharmacy Medication Price Guide with fast, offline partial-matching search.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
