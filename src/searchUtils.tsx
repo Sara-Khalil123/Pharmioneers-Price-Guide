@@ -116,7 +116,7 @@ const SYNONYM_GROUPS: string[][] = [
   // Cerebrolysin
   ['سيربرولايسين', 'سربرولايزين', 'سيربرولايزين', 'سبرجولاسين', 'سبرجو', 'cerebrolysin'],
   // Digoxin / Cardixin / Lanoxin
-  ['كارديكين', 'كارديكسين', 'كاردكسين', 'لانوكسين', 'ديجوكسين', 'كارديقين', 'cardixin', 'lanoxin', 'digoxin'],
+  ['كارديكسين', 'كاردكسين', 'كارديكين', 'لانوكسين', 'ديجوكسين', 'كارديقين', 'cardixin', 'lanoxin', 'digoxin'],
   // Caffeine Citrate / Encafine / Acetofent
   ['كافيين', 'انكافاين', 'انفاكافين', 'انفكافين', 'اسيتوفنت', 'أسيتوفنت', 'caffeine', 'encafine', 'acetofent'],
   // Ketalar / Ketamine
@@ -154,7 +154,131 @@ const SYNONYM_GROUPS: string[][] = [
   // Cyclopentolate / Cyclogyl / Suixlate
   ['سيكلوبنتولات', 'سيكلوجل', 'سويكسولات', 'سوكسيلات', 'سواكسلات', 'cyclopentolate', 'cyclogyl', 'suixlate'],
   // Cidex / Glutaraldehyde / Disinfectant
-  ['سيدكس', 'سيدكس مطهر', 'سيدكس مناظير', 'سيدكس أدوات', 'سيدكس ادوات', 'غلوتارالدهيد', 'جلارالدهيد', 'جلوتارالدهيد', 'cidex', 'glutaraldehyde']
+  ['سيدكس', 'سيدكس مطهر', 'سيدكس مناظير', 'سيدكس أدوات', 'سيدكس ادوات', 'غلوتارالدهيد', 'جلارالدهيد', 'جلوتارالدهيد', 'cidex', 'glutaraldehyde'],
+  // Uride / UR-AID / Fawwar
+  ['يورايد', 'يورإيد', 'ورايد', 'يور ايد', 'يور-ايد', 'يور إيد', 'فوار يورايد', 'فوار يورإيد', 'uraid', 'ur-aid', 'ur aid', 'uride', 'euride'],
+  // Neomune
+  ['نيوميون', 'نيومين', 'نيو ميون', 'نيوميون زجاجة', 'neomune', 'neomun', 'ne-mune'],
+  // Ensure
+  ['انشور', 'إنشور', 'انشور زجاجة', 'انشور شراب', 'ensure', 'ensur'],
+  // Betamin / Peptamen
+  ['بيتامين', 'بيتامين زجاجة', 'بيبتامين', 'بتامين', 'betamin', 'peptamen', 'bitamin'],
+  // Domigest
+  ['دوميجست', 'دومجست', 'دوميجست شراب', 'دوميغيست', 'domigest', 'domegest'],
+  // Hydroferrin Enrich
+  ['هيدروفرين', 'هيدروفرين انريتش', 'هيدروفرين إنريتش', 'انريتش', 'إنريتش', 'حديد قطرة', 'hydroferrin', 'enrich', 'hydroferrin enrich'],
+  // Primacor / Milrinone
+  ['بريماكور', 'بريماكور امبول', 'بريماكور أمبول', 'ميلرينون', 'primacor', 'milrinone'],
+  // Arbatag / Tegretol / Carbamazepine
+  ['ارباتج', 'أرباتج', 'ارباتاج', 'ارباتج200', 'تجريتول', 'تجريتول 200', 'كاربامازيبين', 'arbatag', 'tegretol', 'carbamazepine'],
+  // Amocerebral / Amoseryle
+  ['اموسريبرال', 'أموسريبرال', 'اموسريبرال بلس', 'أموسريبرال بلس', 'اموزيريل', 'اموزبريل', 'amoseryle', 'amocerebral', 'amocerebral plus'],
+  // Erastapex / Irastapex / Olmesartan
+  ['ايراستبكس', 'ايراستابكس', 'ايرستابكس', 'erastapex', 'irastapex'],
+  // Alfacalcidol / One Alpha / Bonecare
+  ['الفاكالسيدول', 'الفاكسيدول', 'وان الفا', 'وان الفاء', 'بونكير', 'alfacalcidol', 'one alpha', 'bonecare'],
+  // Ursochol / Ursofalk
+  ['اورسكول', 'اورسوفالك', 'أورسوفالك', 'ursochol', 'ursofalk', 'ursodeoxycholic'],
+  // Bilichol / Rowachol / Bilcol
+  ['بيليكول', 'بيلكول', 'رواكول', 'روابكس', 'bilichol', 'rowachol', 'bilcol', 'rowapex'],
+  // Torasemide / Examide
+  ['تروسيميد', 'تروسيميده', 'اكساميد', 'أكساميد', 'torasemide', 'torsemide', 'examide'],
+  // Metformin / Cidophage / Glucophage
+  ['ميتفورمين', 'متفورمين', 'سيدوفاج', 'سدوفاج', 'جلوكوفاج', 'جلوكوفاج اكس ار', 'جلكوفاج', 'metformin', 'cidophage', 'glucophage'],
+  // Glucan / Glibenclamide + Metformin
+  ['جلوكان', 'جلوبينكلاميد', 'جلوكوفانس', 'glucan', 'glibenclamide', 'glucovance'],
+  // Forxiga / Dapagliflozin / Diglifloz
+  ['فورسيجا', 'فورسياجا', 'ديجليفلوز', 'داباجليفلوزين', 'dapagliflozin', 'forxiga'],
+  // Diosmin / Daflon
+  ['ديوزمين', 'دافلون', 'دفلون', 'ديوسمين', 'diosmin', 'daflon'],
+  // Diamicron / Diamedizen / Gliclazide
+  ['دياميكرون', 'دياميدازين', 'دياميدزين', 'دياميديزين', 'دياميكرو', 'جليكلازيد', 'diamicron', 'diamedizen', 'diamedazine', 'gliclazide'],
+  // Depakine / Valproate
+  ['ديباكين', 'دباكين', 'فالبروات', 'صوديوم فالبروات', 'ديباكين كرونو', 'depakine', 'valproate', 'sodium valproate', 'valproic'],
+  // Risperidone / Risperdal / Apexidone
+  ['ريسبريدون', 'رسبريدون', 'ريسبردال', 'رسبردال', 'ابكسيدون', 'أبكسيدون', 'سيكودال', 'risperidone', 'risperdal', 'apexidone', 'psychodal'],
+  // Randil / Adancor / Nicorandil
+  ['رانديل', 'ادانكور', 'أدانكور', 'نيكورانديل', 'نيكوراندايل', 'randil', 'adancor', 'nicorandil'],
+  // Ramipril / Tritace
+  ['رامبيريل', 'راميبريل', 'تريتاس', 'تريتيس', 'ramipril', 'tritace'],
+  // Sulfasalazine / Salazopyrin
+  ['سلفاسلازين', 'سلفاسالازين', 'سالازوبيرين', 'سلازوبيرين', 'sulfasalazine', 'salazopyrin'],
+  // Sinopril / Lisinopril / Zestril
+  ['سينوبريل', 'ليزينوبريل', 'ليسينوبريل', 'زيستريل', 'sinopril', 'lisinopril', 'zestril'],
+  // Sinopril Co / Zestoretic
+  ['سينوبريل كو', 'سينوبريل كوا', 'زيستوريتك', 'زيستورتك', 'sinopril co', 'zestoretic', 'lisinopril co'],
+  // Seloken ZOK / Betaloc / Metoprolol
+  ['سيلوكين', 'سيلوكين زوك', 'سيلوكينزوك', 'بيتالوك', 'بيتاتالوك', 'ميتوبرولول', 'seloken', 'seloken zok', 'betaloc', 'betaloc zok', 'metoprolol'],
+  // Marevan / Warfarin
+  ['ماريفان', 'مريفان', 'مارفان', 'وارفارين', 'ورفارين', 'marevan', 'warfarin'],
+  // Cerebromap / Praxilene / Naftidrofuryl
+  ['سريبروماب', 'سيربروماب', 'سيرسروفوريل', 'سيرسرو فوريل', 'نافتيدروفوريل', 'بريكسيلين', 'براكسيلين', 'براكسلان', 'cerebromap', 'naftidrofuryl', 'praxilene'],
+  // Vildagliptin / Galvus / Vildaglose
+  ['فيلداجلبتن', 'فيلداجليبتين', 'فيلداجليبتن', 'جالفوس', 'جلفوس', 'فيلداجلوز', 'فيلداجلوس', 'فيلداجلاوز', 'vildagliptin', 'galvus', 'vildaglose'],
+  // Vildagliptin Met / Galvus Met / Vildaglose Plus
+  ['فيلداجلبتن بلس', 'جالفوس مت', 'جالفوس ميت', 'جلفوس مت', 'فيلداجلوز بلس', 'فيلداجلوز مت', 'galvus met', 'vildagliptin met', 'vildaglose plus', 'vildaglose met'],
+  // Famotidine / Antodine
+  ['فاموتيدين', 'فاموتدين', 'فاموتين', 'انتودين', 'أنتودين', 'famotidine', 'antodine'],
+  // Voriconazole / Vfend
+  ['فوريكونازول', 'فوركونازول', 'ففند', 'فيفند', 'voriconazole', 'vfend'],
+  // Fluoxetine / Prozac
+  ['فلوكسيتين', 'فلوكسين', 'بروزاك', 'فلوزاك', 'ديبريبان', 'fluoxetine', 'prozac'],
+  // Paroxetine / Seroxat
+  ['باروكسيتين', 'بروكسيتين', 'سيروكسات', 'سروكسات', 'paroxetine', 'seroxat'],
+  // Vitayami
+  ['فيتايامي', 'فيتامي', 'فيتايامى', 'vitayami'],
+  // Calcium Carbonate / Calcimate / Cal-Preg
+  ['كالسيوم كربونات', 'كربونات الكالسيوم', 'كالسيمات', 'كال بريج', 'كالبريج', 'كال بريج اقراص', 'كالسيترون', 'calcium carbonate', 'calcimate', 'cal-preg', 'calpreg'],
+  // Hydrochlorothiazide / Esidrex
+  ['هيدروكلوروثيازيد', 'هيدروكلوروثيازايد', 'اسيدريكس', 'أسيدريكس', 'hydrochlorothiazide', 'esidrex', 'hctz'],
+  // Bromazepam / Lexotanil / Calmepam
+  ['برومازيبام', 'بروموزيبام', 'لكسوتانيل', 'لوكسوتانيل', 'كالميبام', 'bromazepam', 'lexotanil', 'calmepam'],
+  // Cardura / Doxazosin
+  ['كاردورا', 'كردورا', 'دوكسازوسين', 'دكسازوسين', 'cardura', 'doxazosin'],
+  // Cosantox / Cozantex
+  ['كوزانتوكس', 'كوزنتوكس', 'كوزانتكس', 'كوزانتيكس', 'cosantox', 'cozantex'],
+  // Lasilactone / Spironolactone + Furosemide
+  ['لازيلاكتون', 'لازلاكتون', 'لازيلكتون', 'لوزاركتون', 'lasilactone', 'lazilactone'],
+  // Montelukast / Singulair / Clairair / Asmacast
+  ['مونتيلوكاست', 'مونتيلوكست', 'سينجولير', 'سنجولير', 'ازماكاست', 'أزماكاست', 'إزماكاست', 'كلير اير', 'montelukast', 'singulair', 'clairair', 'asmacast'],
+  // Methyldopa / Aldomet
+  ['ميثيل دوبا', 'ميثيلدوبا', 'مثيل دوبا', 'الدومت', 'الدمت', 'ألدومت', 'ألدوميت', 'methyldopa', 'aldomet'],
+  // Mebendazole / Vermox / Antiver
+  ['ميبندازول', 'مبندازول', 'فيرموكس', 'فرمكس', 'انتيفير', 'أنتيفير', 'mebendazole', 'vermox', 'antiver'],
+  // Trimetazidine / Vastarel / Metamidine / Metacardia
+  ['ميتاميدين', 'ميتاكارديا', 'متاكارديا', 'فاستاريل', 'فستاريل', 'فاستوريل', 'تريميتازيدين', 'تريمتازيدين', 'metamidine', 'metacardia', 'vastarel', 'trimetazidine'],
+  // Isosorbide Mononitrate / Mononit / Imdur / Monomak
+  ['مونونيت', 'ايزوسوربيد', 'أيزوسوربيد', 'مونوماك', 'ايمدور', 'إيمدور', 'isosorbide mononitrate', 'mononit', 'imdur', 'monomak'],
+  // Cyclobenzaprine / Multi-relax / Move Easy
+  ['سايكلوبنزابرين', 'سيكلوبنزابرين', 'مالتي ريلاكس', 'مالتي-ريلاكس', 'موف ايزي', 'موف إيزي', 'موفايزي', 'cyclobenzaprine', 'multi-relax', 'multirelax', 'move easy', 'moveasy'],
+  // Milga / Neurovit
+  ['ميلجا', 'ملجا', 'ميلجا ادفانس', 'نيوروفيت', 'نيورفيت', 'milga', 'neurovit'],
+  // Mucosta / Rebamipide
+  ['ميكوستا', 'مكوستا', 'ريباميبيد', 'ريبامبيد', 'mucosta', 'rebamipide'],
+  // Methyltechno
+  ['ميثيل تكنو', 'ميثيلتكنو', 'ميثيل تكنو أفلام', 'methyltechno'],
+  // Repaglinide / Megix / Novonorm
+  ['ميجكس', 'مجكس', 'ريباجلينيد', 'رباجلينيد', 'نوفونورم', 'نوفونوروم', 'megix', 'repaglinide', 'novonorm'],
+  // Formoterol / Metrohaler / Foradil
+  ['متروهيلر', 'متروهيلار', 'مترو هيلر', 'فورميترول', 'فورمترول', 'فورايديل', 'فوراديل', 'metrohaler', 'formoterol', 'foradil'],
+  // Nitroglycerin / Nitromak
+  ['نيتروجليسرين', 'نتروجليسرين', 'نيتروماك', 'نيتروماك ريتارد', 'nitroglycerin', 'nitromak'],
+  // Nebivolol / Nebilet / Nevilob
+  ['نيبفولول', 'نيبيفولول', 'نيبيلت', 'نبيلت', 'نيفيلوب', 'نيفلب', 'نفلوب', 'nebivolol', 'nebilet', 'nevilob', 'nebilob'],
+  // Hydroxychloroquine / Plaquenil / Hydroquine
+  ['هيدروكسي كلوروكين', 'هيدروكسي كلوروكوين', 'بلاكونيل', 'بلاكوانيل', 'هيدروكين', 'هيدروكوين', 'هيدروكسيكوين', 'hydroxychloroquine', 'plaquenil', 'hydroquine', 'hydroquin'],
+  // Rowatinex / Urinex
+  ['رواتينكس', 'رواتينكس كبسول', 'رواتنكس', 'يورينكس', 'يورنكس', 'روانكس', 'rowatinex', 'urinex'],
+  // Carvid / Carvedilol / Dilatrend
+  ['كارفيد', 'كرفيد', 'كارفيديلول', 'كارفيدلول', 'ديلاتريند', 'ديلاتيرند', 'carvid', 'carvedilol', 'dilatrend'],
+  // Valsartan / Tareg / Diovan / Disartan
+  ['فالسارتان', 'فلستاران', 'تارج', 'طارق', 'تارغ', 'دايوفان', 'ديوفان', 'ديسارتان', 'valsartan', 'tareg', 'diovan', 'disartan'],
+  // Verapamil / Isoptin
+  ['فيراباميل', 'فراباميل', 'فيرابميل', 'ايزوبتين', 'إيزوبتين', 'ايزوبتن', 'verapamil', 'isoptin'],
+  // Captopril / Capoten
+  ['كابتوبريل', 'كبتوبريل', 'كابوتين', 'كابتن', 'كابوتن', 'captopril', 'capoten'],
+  // Marevan / Warfarin
+  ['مارفان', 'ماريفان', 'مرفان', 'مريفان', 'وارفارين', 'ورفارين', 'marevan', 'marivan', 'warfarin']
 ];
 
 export function isGenericOrUnitToken(token: string): boolean {

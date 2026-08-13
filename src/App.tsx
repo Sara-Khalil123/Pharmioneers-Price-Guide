@@ -3,11 +3,34 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useMemo } from 'react';
-import { Search, Info, Package, ListFilter, Pill, Syringe, Sparkles, ShieldCheck, Tag, ArrowLeft, RefreshCw } from 'lucide-react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
+import { 
+  Search, 
+  Info, 
+  Package, 
+  ListFilter, 
+  Pill, 
+  Syringe, 
+  Sparkles, 
+  ShieldCheck, 
+  Tag, 
+  ArrowLeft, 
+  RefreshCw, 
+  Wifi, 
+  WifiOff, 
+  Database,
+  CheckCircle2,
+  DownloadCloud
+} from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { medications, Medication } from './data';
+import { Medication } from './data';
 import { searchMedications, HighlightMatch } from './searchUtils';
+import { 
+  loadStoredMedications, 
+  syncMedicationsInBackground, 
+  formatSyncTime, 
+  StorageMetadata 
+} from './storage';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -18,27 +41,117 @@ function cn(...inputs: ClassValue[]) {
 export default function App() {
   const [query, setQuery] = useState('');
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  
+  // Offline persistence and sync states
+  const [medicationsList, setMedicationsList] = useState<Medication[]>(() => {
+    const { data } = loadStoredMedications();
+    return data;
+  });
+  
+  const [isOnline, setIsOnline] = useState<boolean>(() => {
+    return typeof navigator !== 'undefined' ? navigator.onLine : true;
+  });
+
+  const [storageMeta, setStorageMeta] = useState<StorageMetadata>(() => {
+    const { metadata } = loadStoredMedications();
+    return metadata;
+  });
+
+  const [isSyncing, setIsSyncing] = useState<boolean>(false);
+  const [syncToast, setSyncToast] = useState<{ message: string; type: 'success' | 'info' } | null>(null);
+
+  // Synchronize data in background when online
+  const triggerSync = useCallback(async (isManual = false) => {
+    if (!navigator.onLine) {
+      if (isManual) {
+        setSyncToast({
+          message: 'أنت في وضع عدم الاتصال (Offline) - البيانات معروضة ومحفوظة بالكامل على هاتفك.',
+          type: 'info'
+        });
+        setTimeout(() => setSyncToast(null), 4000);
+      }
+      return;
+    }
+
+    setIsSyncing(true);
+    try {
+      const res = await syncMedicationsInBackground();
+      const updatedInfo = loadStoredMedications();
+      setMedicationsList(updatedInfo.data);
+      setStorageMeta(updatedInfo.metadata);
+
+      if (isManual || res.updated) {
+        setSyncToast({
+          message: res.updated 
+            ? 'تم جلب وتحديث أحدث بيانات الأسعار وحفظها في الذاكرة المحلية بنجاح!' 
+            : 'تم التحقق من تطابق البيانات - كافة الأسعار محدثة ومحفوظة محلياً.',
+          type: 'success'
+        });
+        setTimeout(() => setSyncToast(null), 4000);
+      }
+    } finally {
+      setIsSyncing(false);
+    }
+  }, []);
+
+  // Monitor network status changes
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      setSyncToast({
+        message: 'تمت استعادة الاتصال بالإنترنت - يتم جلب ومزامنة التحديثات تلقائياً...',
+        type: 'info'
+      });
+      setTimeout(() => setSyncToast(null), 4000);
+      triggerSync(false);
+    };
+
+    const handleOffline = () => {
+      setIsOnline(false);
+      setSyncToast({
+        message: 'انقطع الاتصال بالإنترنت - التطبيق يعمل بكفاءة كاملة بالاعتماد على البيانات المحفوظة محلياً.',
+        type: 'info'
+      });
+      setTimeout(() => setSyncToast(null), 5000);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Initial background sync check
+    if (navigator.onLine) {
+      triggerSync(false);
+    }
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [triggerSync]);
 
   // Quick search suggestions
   const quickSearches = [
+    'يورإيد',
+    'فنتوكف',
+    'في دروب',
+    'كيناكومب',
+    'ميدرابيد',
+    'نيترودرم',
     'سيدكس',
-    'سويكسولات',
     'توسين',
     'بارامول',
-    'اوكسي توسين',
-    'دايسينون',
-    'امبيسلين',
-    'ديفلوكان',
-    'فاركولين'
+    'سيدوفاج',
+    'لازيلاكتون',
+    'ماريفان'
   ];
 
   const results = useMemo(() => {
-    let filtered = searchMedications(medications, query);
+    let filtered = searchMedications(medicationsList, query);
     if (selectedCategory) {
       filtered = filtered.filter(item => item.category === selectedCategory);
     }
     return filtered;
-  }, [query, selectedCategory]);
+  }, [medicationsList, query, selectedCategory]);
 
   // Statistics for the landing page
   const categoryStats = useMemo(() => {
@@ -47,7 +160,7 @@ export default function App() {
       "أقراص": 0,
       "متنوعات": 0
     };
-    medications.forEach(med => {
+    medicationsList.forEach(med => {
       if (stats[med.category] !== undefined) {
         stats[med.category]++;
       } else {
@@ -55,10 +168,10 @@ export default function App() {
       }
     });
     return stats;
-  }, []);
+  }, [medicationsList]);
 
   // Group by category for results table
-  const groupedResults = useMemo(() => {
+  const groupedResults = useMemo<Record<string, Medication[]>>(() => {
     const groups: Record<string, Medication[]> = {
       "أمبولات ومحاليل": [],
       "أقراص": [],
@@ -73,7 +186,9 @@ export default function App() {
       }
     });
     
-    return Object.fromEntries(Object.entries(groups).filter(([_, items]) => items.length > 0));
+    return Object.fromEntries(
+      Object.entries(groups).filter(([_, items]) => items.length > 0)
+    ) as Record<string, Medication[]>;
   }, [results]);
 
   const getCategoryIcon = (category: string) => {
@@ -98,9 +213,37 @@ export default function App() {
 
   return (
     <div className="min-h-screen bg-slate-50 text-slate-900 font-sans" dir="rtl">
+      {/* Network & Sync Toast Notification */}
+      <AnimatePresence>
+        {syncToast && (
+          <motion.div
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="fixed top-3 left-1/2 -translate-x-1/2 z-50 max-w-md w-11/12 pointer-events-none"
+          >
+            <div className={cn(
+              "px-4 py-3 rounded-2xl shadow-lg border text-xs sm:text-sm font-medium flex items-center gap-3 backdrop-blur-md",
+              syncToast.type === 'success' 
+                ? "bg-emerald-900/90 text-white border-emerald-500/50 shadow-emerald-950/20"
+                : "bg-slate-900/90 text-white border-slate-700 shadow-slate-950/30"
+            )}>
+              {syncToast.type === 'success' ? (
+                <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
+              ) : isOnline ? (
+                <Wifi className="w-5 h-5 text-teal-400 shrink-0" />
+              ) : (
+                <WifiOff className="w-5 h-5 text-amber-400 shrink-0" />
+              )}
+              <span className="leading-snug">{syncToast.message}</span>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Top Header Navigation */}
       <header className="bg-white border-b border-slate-200 sticky top-0 z-20 shadow-xs">
-        <div className="max-w-6xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+        <div className="max-w-6xl mx-auto px-4 py-3.5 sm:px-6 lg:px-8">
           <div className="flex items-center justify-between">
             <div 
               className="flex items-center gap-3 cursor-pointer group"
@@ -112,28 +255,66 @@ export default function App() {
               <div>
                 <h1 className="text-xl font-bold text-slate-900 tracking-tight flex items-center gap-2">
                   دليل أسعار الأدوية
-                  <span className="text-xs font-normal px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
-                    الصيدلية الإكلينيكية
-                  </span>
                 </h1>
-                <p className="text-xs text-slate-500">
-                  مساعد البحث السريع وتحديد الأسعار الرسمية
-                </p>
+                <div className="flex items-center gap-2 mt-0.5">
+                  {/* Status Indicator */}
+                  {isOnline ? (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-md border border-emerald-200/60">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                      متصل بالإنترنت
+                    </span>
+                  ) : (
+                    <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-md border border-amber-200/80">
+                      <WifiOff className="w-3 h-3 text-amber-600" />
+                      يعمل بدون إنترنت (Offline)
+                    </span>
+                  )}
+                  <span className="text-[11px] text-slate-400 hidden sm:inline">
+                    • محفوظ محلياً ({storageMeta.totalItems} صنف)
+                  </span>
+                </div>
               </div>
             </div>
 
-            {isFilterActive && (
+            <div className="flex items-center gap-2">
               <button
-                onClick={resetFilters}
-                className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 px-3 py-2 rounded-xl transition-colors border border-slate-200"
+                onClick={() => triggerSync(true)}
+                disabled={isSyncing}
+                title={`آخر مزامنة: ${formatSyncTime(storageMeta.lastSync)}`}
+                className={cn(
+                  "flex items-center gap-1.5 text-xs font-semibold px-3 py-2 rounded-xl transition-all border shadow-2xs",
+                  isOnline
+                    ? "text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border-emerald-200"
+                    : "text-slate-700 bg-slate-100 hover:bg-slate-200 border-slate-200"
+                )}
               >
-                <RefreshCw className="w-3.5 h-3.5" />
-                العودة للرئيسية
+                <RefreshCw className={cn("w-3.5 h-3.5", isSyncing ? "animate-spin text-emerald-600" : "text-emerald-700")} />
+                <span className="hidden sm:inline">
+                  {isSyncing ? 'جارِ المزامنة...' : 'تحديث البيانات'}
+                </span>
               </button>
-            )}
+
+              {isFilterActive && (
+                <button
+                  onClick={resetFilters}
+                  className="flex items-center gap-1.5 text-xs font-medium text-slate-600 hover:text-emerald-700 bg-slate-100 hover:bg-emerald-50 px-3 py-2 rounded-xl transition-colors border border-slate-200"
+                >
+                  <RefreshCw className="w-3.5 h-3.5" />
+                  العودة للرئيسية
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </header>
+
+      {/* Offline Mode Status Banner (Always clear & reassuring) */}
+      {!isOnline && (
+        <div className="bg-amber-500/10 border-b border-amber-200 text-amber-900 px-4 py-2 text-xs text-center font-medium flex items-center justify-center gap-2">
+          <WifiOff className="w-4 h-4 text-amber-700 shrink-0" />
+          <span>أنت تعمل الآن في <strong>وضع عدم الاتصال (Offline)</strong> — جميع بيانات الأسعار محفوظة في ذاكرة هاتفك وتعمل بدقة كاملة.</span>
+        </div>
+      )}
 
       <main className="max-w-6xl mx-auto px-4 py-6 sm:px-6 lg:px-8">
         {/* Search Header Bar */}
@@ -171,7 +352,7 @@ export default function App() {
                   : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100"
               )}
             >
-              الكل ({medications.length})
+              الكل ({medicationsList.length})
             </button>
             {Object.entries(categoryStats).map(([catName, count]) => (
               <button
@@ -215,13 +396,13 @@ export default function App() {
                 <div className="relative z-10 max-w-2xl">
                   <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-200 border border-emerald-400/30 text-xs font-medium mb-4 backdrop-blur-xs">
                     <Sparkles className="w-3.5 h-3.5 text-emerald-300" />
-                    <span>مساعد الصيدلة السريرية الذكي</span>
+                    <span>مساعد الصيدلة السريرية الذكي • يدعم العمل بدون إنترنت</span>
                   </div>
                   <h2 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-white mb-3 leading-snug">
                     دليل ومحرك بحث أسعار الأدوية الرسمي
                   </h2>
                   <p className="text-emerald-100/90 text-sm sm:text-base leading-relaxed mb-6">
-                    ابحث فوراً بالاسم العلمي أو التجاري أو المادة الفعالة لمعرفة سعر الشراء وسعر النفقة وسعر الأهالي بدقة ومطابقة فورية.
+                    ابحث فوراً بالاسم العلمي أو التجاري أو المادة الفعالة لمعرفة سعر الشراء وسعر النفقة وسعر الأهالي بدقة ومطابقة فورية، مع حفظ البيانات بالكامل للعمل دون الحاجة لشبكة الإنترنت.
                   </p>
 
                   <div className="flex flex-wrap items-center gap-3">
@@ -236,7 +417,7 @@ export default function App() {
                       onClick={() => handleSelectCategory(null)}
                       className="inline-flex items-center gap-2 bg-white/10 hover:bg-white/20 text-white border border-white/20 font-medium px-4 py-2.5 rounded-2xl text-xs sm:text-sm transition-colors backdrop-blur-xs"
                     >
-                      عرض جميع الأصناف ({medications.length})
+                      عرض جميع الأصناف ({medicationsList.length})
                     </button>
                   </div>
                 </div>
@@ -300,12 +481,12 @@ export default function App() {
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
                 <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-start gap-3">
                   <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl shrink-0 mt-0.5">
-                    <Sparkles className="w-4 h-4" />
+                    <Database className="w-4 h-4" />
                   </div>
                   <div>
-                    <h5 className="text-xs font-bold text-slate-900">ربط المادة الفعالة بالبدائل</h5>
+                    <h5 className="text-xs font-bold text-slate-900">تخزين محلي بدون إنترنت</h5>
                     <p className="text-[11px] text-slate-500 leading-normal mt-0.5">
-                      يتعرف النظام على الأسماء التجارية والعلمية تلقائياً لإظهار كافة البدائل.
+                      يتم حفظ البيانات وتحديثها تلقائياً على جهازك لتعمل في أي وقت ومكان دون انقطاع.
                     </p>
                   </div>
                 </div>
@@ -324,12 +505,12 @@ export default function App() {
 
                 <div className="bg-white p-4 rounded-2xl border border-slate-200 flex items-start gap-3">
                   <div className="p-2 bg-emerald-50 text-emerald-600 rounded-xl shrink-0 mt-0.5">
-                    <ListFilter className="w-4 h-4" />
+                    <DownloadCloud className="w-4 h-4" />
                   </div>
                   <div>
-                    <h5 className="text-xs font-bold text-slate-900">تصفنيف صيدلاني دقيق</h5>
+                    <h5 className="text-xs font-bold text-slate-900">مزامنة خلفية ذكية</h5>
                     <p className="text-[11px] text-slate-500 leading-normal mt-0.5">
-                      مقسمة إلى أمبولات ومحاليل، أقراص، ومتنوعات لسهولة الوصول.
+                      مزامنة تلقائية في الخلفية عند توفر الاتصال للحصول على أحدث الأسعار.
                     </p>
                   </div>
                 </div>
@@ -348,14 +529,24 @@ export default function App() {
                 <Info className="w-8 h-8 text-red-500 mx-auto mb-2" />
                 <h3 className="font-bold text-lg mb-1">الصنف غير متوفر</h3>
                 <p className="text-sm text-red-600 leading-relaxed mb-4">
-                  عذراً، هذا الصنف وبدائله غير متوفرة في قائمة الأسعار الحالية.
+                  {selectedCategory ? `عذراً، الصنف غير متوفر في قسم "${selectedCategory}". جرب البحث في جميع الأقسام.` : 'عذراً، هذا الصنف وبدائله غير متوفرة في قائمة الأسعار الحالية.'}
                 </p>
-                <button
-                  onClick={resetFilters}
-                  className="px-4 py-2 bg-white text-red-700 text-xs font-bold rounded-xl border border-red-200 hover:bg-red-100 transition-colors"
-                >
-                  العودة للقائمة الرئيسية
-                </button>
+                <div className="flex items-center justify-center gap-2">
+                  {selectedCategory && (
+                    <button
+                      onClick={() => setSelectedCategory(null)}
+                      className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-xl hover:bg-emerald-700 transition-colors shadow-xs"
+                    >
+                      البحث في جميع الأقسام
+                    </button>
+                  )}
+                  <button
+                    onClick={resetFilters}
+                    className="px-4 py-2 bg-white text-red-700 text-xs font-bold rounded-xl border border-red-200 hover:bg-red-100 transition-colors"
+                  >
+                    العودة للقائمة الرئيسية
+                  </button>
+                </div>
               </div>
             </motion.div>
           ) : (
@@ -393,7 +584,7 @@ export default function App() {
               </div>
 
               {/* Grouped Results Tables */}
-              {Object.entries(groupedResults).map(([category, items]) => (
+              {(Object.entries(groupedResults) as [string, Medication[]][]).map(([category, items]) => (
                 <div key={category} className="bg-white rounded-2xl shadow-xs border border-slate-200 overflow-hidden">
                   <div className="bg-slate-50 px-6 py-4 border-b border-slate-200 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
@@ -456,5 +647,6 @@ export default function App() {
     </div>
   );
 }
+
 
 
